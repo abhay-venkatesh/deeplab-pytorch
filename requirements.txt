@@ -1,0 +1,8 @@
+click
+tqdm
+scipy
+matplotlib
+pyyaml
+h5py
+torchnet
+opencv
