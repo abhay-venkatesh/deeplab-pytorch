@@ -156,13 +156,20 @@ def main(config, cuda):
         optimizer.zero_grad()
 
         iter_loss = 0
+        import time
+        data_times = []
+        compute_times = []
         for i in range(1, CONFIG.ITER_SIZE + 1):
+            start = time.time()
             try:
                 images, labels = next(loader_iter)
             except:
                 loader_iter = iter(loader)
                 images, labels = next(loader_iter)
+            end = time.time()
+            data_times.append(end - start)
 
+            start = time.time()
             images = images.to(device)
             labels = labels.to(device).unsqueeze(1).float()
 
@@ -188,6 +195,8 @@ def main(config, cuda):
 
         # Update weights with accumulated gradients
         optimizer.step()
+        end = time.time()
+        compute_times.append(end - start)
 
         # TensorBoard
         if iteration % CONFIG.ITER_TB == 0:
@@ -216,6 +225,12 @@ def main(config, cuda):
                 model.module.state_dict(),
                 osp.join(CONFIG.SAVE_DIR, "checkpoint_current.pth"),
             )
+    
+    import csv
+    with open('logs.csv', 'w', newline='') as logfile:
+        logwriter = csv.writer(logfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for row in zip(data_times, compute_times):
+            logwriter.writerow(row)
 
     torch.save(
         model.module.state_dict(), osp.join(CONFIG.SAVE_DIR, "checkpoint_final.pth")
